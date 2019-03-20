@@ -1,0 +1,7 @@
+*.log
+*.session
+out/
+.idea/
+*.iml
+target/
+lib/
