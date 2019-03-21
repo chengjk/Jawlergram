@@ -232,8 +232,8 @@ public class DBMain {
                 TLVector<TLAbsInputUser> sub = new TLVector<>();
                 sub.addAll(slice);
                 inviteUserToChannelBatch(channelId, sub);
-                System.out.println(" invited " + invited.size());
                 invited.addAll(slice);
+                System.out.println("invited " + invited.size());
             }
         } catch (IOException e) {
             log.error("", e);
