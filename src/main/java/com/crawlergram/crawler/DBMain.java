@@ -32,10 +32,12 @@ import org.telegram.api.user.TLUser;
 import org.telegram.bot.kernel.engine.MemoryApiState;
 import org.telegram.tl.TLVector;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+
+import org.apache.commons.cli.*;
 
 /**
  * created by jacky. 2019/3/19 5:11 PM
@@ -76,9 +78,32 @@ public class DBMain {
     private static DBStorage dbStorage;
 
     public static void main(String[] args) throws IOException {
+
         initConfig();
         initApiDoAuth();
-        System.out.println("finish");
+        CommandLine cmd = CliCmdUtil.validate(args);
+        if (cmd != null) {
+            String operate = cmd.getOptionValue("operate");
+            String sourceChannel = cmd.getOptionValue("sourceChannel");
+            String targetChannel = cmd.getOptionValue("targetChannel");
+
+            String file = cmd.getOptionValue("file");
+            switch (operate) {
+                case "dialog":
+                    outputUserDialog();
+                    break;
+                case "contact":
+                    outputChannelContact(Integer.valueOf(sourceChannel));
+                    break;
+                case "diff":
+                    outputChannelContactDiff(Integer.valueOf(sourceChannel), Integer.valueOf(targetChannel));
+                    break;
+                case "invite":
+                    inviteContactToChannel(Integer.valueOf(targetChannel), file);
+                    break;
+            }
+            System.out.println("finish");
+        }
         System.exit(1);
     }
 
@@ -124,12 +149,16 @@ public class DBMain {
 
         // do auth
         AuthMethods.auth(api, apiState, APIKEY, APIHASH, PHONENUMBER, NAME, SURNAME);
-        outputUserDialog();
 
-        // output channel contact
-        int channelId = 1157009326; //Dipbit_official
-        outputChannelContact(channelId);
-        outputChannelContactDiff(1405149694, 1157009326);
+        // get all dialogs of user (telegram returns 100 dialogs at maximum, getting by slices)
+        DialogsHistoryMethods.getDialogsChatsUsers(api, dialogs, chatsHashMap, usersHashMap, messagesHashMap);
+
+//        outputUserDialog();
+//
+//        // output channel contact
+//        int channelId = 1157009326; //Dipbit_official
+//        outputChannelContact(channelId);
+//        outputChannelContactDiff(1405149694, 1157009326);
     }
 
 
@@ -166,8 +195,6 @@ public class DBMain {
     }
 
     private static void outputUserDialog() {
-        // get all dialogs of user (telegram returns 100 dialogs at maximum, getting by slices)
-        DialogsHistoryMethods.getDialogsChatsUsers(api, dialogs, chatsHashMap, usersHashMap, messagesHashMap);
 
         // output user dialogs
         for (TLDialog dialog : dialogs) {
@@ -177,20 +204,38 @@ public class DBMain {
         }
     }
 
+    public static void inviteContactToChannel(int channelId, String filePath) {
+        try {
+            File file = new File(filePath);
+            if (file.exists()) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (!line.isEmpty()) {
+                        String[] split = line.split(",");
+                        int userId = Integer.parseInt(split[0]);
+                        long userAccessHash = Long.parseLong(split[1]);
+                        inviteUserToChannel(channelId, userId, userAccessHash);
+                        System.out.println(line);
+                    }
+                }
+                br.close();
+            }
+        } catch (IOException e) {
+            log.error("", e);
+        }
+    }
 
-    private static void inviteUserToChannel(int channelId, int userId) {
-        //        TLChannel channelTo = (TLChannel) chatsHashMap.get(1157009326);//Dipbit_official
-        TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId); //Dipbit中文群
+    private static void inviteUserToChannel(int channelId, int userId, long userAccessHash) {
+        TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelTo = new TLInputChannel();
         inputChannelTo.setChannelId(channelTo.getId());
         inputChannelTo.setAccessHash(channelTo.getAccessHash());
 
 
-        TLUser u = (TLUser) usersHashMap.get(userId); //孟辉
-//        TLUser u = (TLUser) usersHashMap.get(761201490); //叫爸爸
         TLInputUser user = new TLInputUser();
-        user.setUserId(u.getId());
-        user.setAccessHash(u.getAccessHash());
+        user.setUserId(userId);
+        user.setAccessHash(userAccessHash);
         ChannelMethods.inviteUser(api, inputChannelTo, user);
     }
 

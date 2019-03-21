@@ -5,3 +5,6 @@ out/
 *.iml
 target/
 lib/
+
+*.contact
+*.dialog
