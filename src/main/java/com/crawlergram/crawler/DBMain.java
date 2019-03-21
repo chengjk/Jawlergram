@@ -79,10 +79,11 @@ public class DBMain {
 
     public static void main(String[] args) throws IOException {
 
-        initConfig();
-        initApiDoAuth();
+
         CommandLine cmd = CliCmdUtil.validate(args);
         if (cmd != null) {
+            initConfig();
+            initApiDoAuth();
             String operate = cmd.getOptionValue("operate");
             String sourceChannel = cmd.getOptionValue("sourceChannel");
             String targetChannel = cmd.getOptionValue("targetChannel");
