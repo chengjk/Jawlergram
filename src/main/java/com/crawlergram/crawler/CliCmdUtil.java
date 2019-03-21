@@ -14,14 +14,20 @@ public class CliCmdUtil {
     public static final String f = "file";
 
 
+    public static final String OPT_DIALOG = "dialog";
+    public static final String OPT_CONTACT = "contact";
+    public static final String OPT_DIFF = "diff";
+    public static final String OPT_INVITE = "invite";
+
+
     public static CommandLine validate(String[] args) {
 
         Options options = new Options();
         Option operate = new Option("o", o, true, "type of operate:\n" +
-                "dialog: output user dialog,\n" +
-                "contact: output channel contact,\n" +
-                "invite: invite contact to target channel,\n" +
-                "diff: output diff contact between source channel and target chanel. source-target.");
+                OPT_DIALOG + ": output user dialog,\n" +
+                OPT_CONTACT + ": output channel contact,\n" +
+                OPT_INVITE + ": invite contact to target channel,\n" +
+                OPT_DIFF + ": output diff contact between source channel and target chanel. source-target.");
         operate.setRequired(true);
         Option sourceChannel = new Option("sc", sc, true, "channel id");
         Option targetChannel = new Option("tc", tc, true, "channel id");
@@ -42,21 +48,21 @@ public class CliCmdUtil {
             String type = cmd.getOptionValue("operate");
 
             switch (type) {
-                case "dialog":
+                case OPT_DIALOG:
                     break;
-                case "contact":
+                case OPT_CONTACT:
                     checkParam(cmd, sc);
                     break;
-                case "diff":
+                case OPT_DIFF:
                     checkParam(cmd, sc);
                     checkParam(cmd, tc);
                     break;
-                case "invite":
+                case OPT_INVITE:
                     checkParam(cmd, tc);
                     checkParam(cmd, f);
                     break;
-                    default:
-                        throw new ParseException("unknown operate.");
+                default:
+                    throw new ParseException("unknown operate.");
             }
 
 

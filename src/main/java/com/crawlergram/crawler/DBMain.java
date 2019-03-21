@@ -89,16 +89,16 @@ public class DBMain {
 
             String file = cmd.getOptionValue("file");
             switch (operate) {
-                case "dialog":
+                case CliCmdUtil.OPT_DIALOG:
                     outputUserDialog();
                     break;
-                case "contact":
+                case CliCmdUtil.OPT_CONTACT:
                     outputChannelContact(Integer.valueOf(sourceChannel));
                     break;
-                case "diff":
+                case CliCmdUtil.OPT_DIFF:
                     outputChannelContactDiff(Integer.valueOf(sourceChannel), Integer.valueOf(targetChannel));
                     break;
-                case "invite":
+                case CliCmdUtil.OPT_INVITE:
                     inviteContactToChannel(Integer.valueOf(targetChannel), file);
                     break;
             }
