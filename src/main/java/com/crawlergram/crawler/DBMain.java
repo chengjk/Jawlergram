@@ -11,11 +11,11 @@ import com.crawlergram.crawler.apicallback.ApiCallbackImplemented;
 import com.crawlergram.crawler.apimethods.AuthMethods;
 import com.crawlergram.crawler.apimethods.ChannelMethods;
 import com.crawlergram.crawler.apimethods.DialogsHistoryMethods;
+import com.crawlergram.crawler.apimethods.MessageMethods;
 import com.crawlergram.crawler.logs.LogMethods;
 import com.crawlergram.crawler.output.ConsoleOutputMethods;
 import com.crawlergram.crawler.output.FileMethods;
 import com.crawlergram.db.DBStorage;
-import jdk.nashorn.internal.ir.IfNode;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.api.chat.TLAbsChat;
 import org.telegram.api.chat.channel.TLChannel;
@@ -28,6 +28,7 @@ import org.telegram.api.input.chat.TLInputChannel;
 import org.telegram.api.input.user.TLAbsInputUser;
 import org.telegram.api.input.user.TLInputUser;
 import org.telegram.api.message.TLAbsMessage;
+import org.telegram.api.message.TLMessage;
 import org.telegram.api.user.TLAbsUser;
 import org.telegram.api.user.TLUser;
 import org.telegram.bot.kernel.engine.MemoryApiState;
@@ -36,9 +37,6 @@ import org.telegram.tl.TLVector;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
-
-
-import org.apache.commons.cli.*;
 
 /**
  * created by jacky. 2019/3/19 5:11 PM
@@ -80,34 +78,37 @@ public class DBMain {
     private static int invitePageSize = 10;
 
     public static void main(String[] args) throws IOException {
+        initConfig();
+        initApiDoAuth();
+        clearAddUserMessage(1157009326, 100);
 
 
-        CommandLine cmd = CliCmdUtil.validate(args);
-        if (cmd != null) {
-            initConfig();
-            initApiDoAuth();
-            String operate = cmd.getOptionValue("operate");
-            String sourceChannel = cmd.getOptionValue("sourceChannel");
-            String targetChannel = cmd.getOptionValue("targetChannel");
-
-            String file = cmd.getOptionValue("file");
-            switch (operate) {
-                case CliCmdUtil.OPT_DIALOG:
-                    outputUserDialog();
-                    break;
-                case CliCmdUtil.OPT_CONTACT:
-                    outputChannelContact(Integer.valueOf(sourceChannel));
-                    break;
-                case CliCmdUtil.OPT_DIFF:
-                    outputChannelContactDiff(Integer.valueOf(sourceChannel), Integer.valueOf(targetChannel));
-                    break;
-                case CliCmdUtil.OPT_INVITE:
-                    inviteContactToChannel(Integer.valueOf(targetChannel), file);
-                    break;
-            }
-            System.out.println("finish");
-        }
-        System.exit(1);
+//        CommandLine cmd = CliCmdUtil.validate(args);
+//        if (cmd != null) {
+//            initConfig();
+//            initApiDoAuth();
+//            String operate = cmd.getOptionValue("operate");
+//            String sourceChannel = cmd.getOptionValue("sourceChannel");
+//            String targetChannel = cmd.getOptionValue("targetChannel");
+//
+//            String file = cmd.getOptionValue("file");
+//            switch (operate) {
+//                case CliCmdUtil.OPT_DIALOG:
+//                    outputUserDialog();
+//                    break;
+//                case CliCmdUtil.OPT_CONTACT:
+//                    outputChannelContact(Integer.valueOf(sourceChannel));
+//                    break;
+//                case CliCmdUtil.OPT_DIFF:
+//                    outputChannelContactDiff(Integer.valueOf(sourceChannel), Integer.valueOf(targetChannel));
+//                    break;
+//                case CliCmdUtil.OPT_INVITE:
+//                    inviteContactToChannel(Integer.valueOf(targetChannel), file);
+//                    break;
+//            }
+//            System.out.println("finish");
+//        }
+//        System.exit(1);
     }
 
     private static void initConfig() throws IOException {
@@ -231,7 +232,7 @@ public class DBMain {
                 List<TLAbsInputUser> slice = users.subList(invited.size(), invited.size() + pageSize);
                 TLVector<TLAbsInputUser> sub = new TLVector<>();
                 sub.addAll(slice);
-                inviteUserToChannelBatch(channelId, sub);
+//                inviteUserToChannelBatch(channelId, sub);
                 invited.addAll(slice);
                 System.out.println("invited " + invited.size());
             }
@@ -262,24 +263,17 @@ public class DBMain {
     }
 
 
-    public static void getVERSION() {
-        TLVector<TLAbsUser> users = getChannelUsers(1157009326);
-
-
-        TLChannel channelTo = (TLChannel) chatsHashMap.get(1157009326);
+    public static void clearAddUserMessage(int channelId, int limit) {
+        TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelTo = new TLInputChannel();
         inputChannelTo.setChannelId(channelTo.getId());
+        inputChannelTo.setAccessHash(channelTo.getAccessHash());
+        Set<TLAbsMessage> history = MessageMethods.getHistory(api, inputChannelTo, limit);
+        if (history != null) {
+            Set<Integer> ids = history.stream().map(m -> ((TLMessage) m).getId()).collect(Collectors.toSet());
+            MessageMethods.deleteMessage(api,inputChannelTo,ids);
+        }
 
-
-        List<TLInputUser> inputUserList = users.stream().map(u -> {
-            TLInputUser input = new TLInputUser();
-            input.setUserId(u.getId());
-            input.setAccessHash(((TLUser) u).getAccessHash());
-            return input;
-        }).collect(Collectors.toList());
-        TLVector<TLAbsInputUser> inputUsers = new TLVector<>();
-        inputUsers.addAll(inputUserList);
-        ChannelMethods.inviteUsers(api, inputChannelTo, inputUsers);
     }
 
     private static TLVector<TLAbsUser> getChannelUsers(int channelId) {
