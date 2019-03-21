@@ -154,12 +154,6 @@ public class DBMain {
         // get all dialogs of user (telegram returns 100 dialogs at maximum, getting by slices)
         DialogsHistoryMethods.getDialogsChatsUsers(api, dialogs, chatsHashMap, usersHashMap, messagesHashMap);
 
-//        outputUserDialog();
-//
-//        // output channel contact
-//        int channelId = 1157009326; //Dipbit_official
-//        outputChannelContact(channelId);
-//        outputChannelContactDiff(1405149694, 1157009326);
     }
 
 
@@ -208,6 +202,7 @@ public class DBMain {
     public static void inviteContactToChannel(int channelId, String filePath) {
         try {
             File file = new File(filePath);
+            TLVector<TLAbsInputUser> users = new TLVector<>();
             if (file.exists()) {
                 BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
                 String line;
@@ -216,17 +211,35 @@ public class DBMain {
                         String[] split = line.split(",");
                         int userId = Integer.parseInt(split[0]);
                         long userAccessHash = Long.parseLong(split[1]);
-                        inviteUserToChannel(channelId, userId, userAccessHash);
-                        System.out.println(line);
+                        TLInputUser inputUser = new TLInputUser();
+                        inputUser.setUserId(userId);
+                        inputUser.setAccessHash(userAccessHash);
+                        users.add(inputUser);
                     }
                 }
                 br.close();
+            }
+
+            List<TLAbsInputUser> invited = new ArrayList<>();
+            while (invited.size() < users.size()) {
+                List<TLAbsInputUser> slice = users.subList(invited.size(), invited.size() + 10);
+                TLVector<TLAbsInputUser> sub = new TLVector<>();
+                sub.addAll(slice);
+                inviteUserToChannelBatch(channelId, sub);
+                invited.addAll(slice);
             }
         } catch (IOException e) {
             log.error("", e);
         }
     }
 
+    private static void inviteUserToChannelBatch(int channelId, TLVector<TLAbsInputUser> users) {
+        TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
+        TLInputChannel inputChannelTo = new TLInputChannel();
+        inputChannelTo.setChannelId(channelTo.getId());
+        inputChannelTo.setAccessHash(channelTo.getAccessHash());
+        ChannelMethods.inviteUsers(api,inputChannelTo, users);
+    }
     private static void inviteUserToChannel(int channelId, int userId, long userAccessHash) {
         TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelTo = new TLInputChannel();
