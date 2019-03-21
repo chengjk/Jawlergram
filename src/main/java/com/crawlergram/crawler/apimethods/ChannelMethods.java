@@ -1,9 +1,3 @@
-/*
- * Title: ChannelMethods.java
- * Project: Jawlergram
- * Creator: Georgii Mikriukov
- * 2019
- */
 
 package com.crawlergram.crawler.apimethods;
 
@@ -68,7 +62,6 @@ public class ChannelMethods {
             req.setChannel(channel);
             req.setUsers(users);
             TLAbsUpdates tlAbsUpdates = api.doRpcCall(req);
-            System.out.println("sdfa");
         } catch (IOException | TimeoutException e) {
             e.printStackTrace();
         }

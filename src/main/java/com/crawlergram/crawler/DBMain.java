@@ -15,6 +15,7 @@ import com.crawlergram.crawler.logs.LogMethods;
 import com.crawlergram.crawler.output.ConsoleOutputMethods;
 import com.crawlergram.crawler.output.FileMethods;
 import com.crawlergram.db.DBStorage;
+import jdk.nashorn.internal.ir.IfNode;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.api.chat.TLAbsChat;
 import org.telegram.api.chat.channel.TLChannel;
@@ -76,6 +77,7 @@ public class DBMain {
     private static TLVector<TLDialog> dialogs = new TLVector<>();
     private static Map<Integer, TLAbsMessage> messagesHashMap = new HashMap<>();
     private static DBStorage dbStorage;
+    private static int invitePageSize = 10;
 
     public static void main(String[] args) throws IOException {
 
@@ -222,10 +224,15 @@ public class DBMain {
 
             List<TLAbsInputUser> invited = new ArrayList<>();
             while (invited.size() < users.size()) {
-                List<TLAbsInputUser> slice = users.subList(invited.size(), invited.size() + 10);
+                int pageSize = invitePageSize;
+                if (users.size() < invited.size() + invitePageSize) {
+                    pageSize = users.size() - invited.size();
+                }
+                List<TLAbsInputUser> slice = users.subList(invited.size(), invited.size() + pageSize);
                 TLVector<TLAbsInputUser> sub = new TLVector<>();
                 sub.addAll(slice);
                 inviteUserToChannelBatch(channelId, sub);
+                System.out.println(" invited " + invited.size());
                 invited.addAll(slice);
             }
         } catch (IOException e) {
@@ -238,8 +245,9 @@ public class DBMain {
         TLInputChannel inputChannelTo = new TLInputChannel();
         inputChannelTo.setChannelId(channelTo.getId());
         inputChannelTo.setAccessHash(channelTo.getAccessHash());
-        ChannelMethods.inviteUsers(api,inputChannelTo, users);
+        ChannelMethods.inviteUsers(api, inputChannelTo, users);
     }
+
     private static void inviteUserToChannel(int channelId, int userId, long userAccessHash) {
         TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelTo = new TLInputChannel();
