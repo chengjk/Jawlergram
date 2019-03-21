@@ -72,7 +72,9 @@ public class AuthMethods {
                 if (sentCode.isPhoneRegistered()) {
                     auth = singIn(api, phoneNum, sentCode.getPhoneCodeHash());
                 } else {
-                    auth = singUp(api, phoneNum, sentCode.getPhoneCodeHash(), name, surname);
+//                    auth = singUp(api, phoneNum, sentCode.getPhoneCodeHash(), name, surname);
+                    System.err.println("NOT REGISTERED!");
+                    return;
                 }
                 // refresh api state
                 apiState.doAuth(auth);

@@ -12,6 +12,8 @@ import com.crawlergram.crawler.apimethods.AuthMethods;
 import com.crawlergram.crawler.apimethods.ChannelMethods;
 import com.crawlergram.crawler.apimethods.DialogsHistoryMethods;
 import com.crawlergram.crawler.logs.LogMethods;
+import com.crawlergram.crawler.output.ConsoleOutputMethods;
+import com.crawlergram.crawler.output.FileMethods;
 import com.crawlergram.db.DBStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.api.chat.TLAbsChat;
@@ -30,9 +32,9 @@ import org.telegram.api.user.TLUser;
 import org.telegram.bot.kernel.engine.MemoryApiState;
 import org.telegram.tl.TLVector;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,17 +44,25 @@ import java.util.stream.Collectors;
 public class DBMain {
 
     // api variables
-    private static int APIKEY = 747275; // your api keys
-    private static String APIHASH = "22eca58b2a2b110e972a050f7f2cb2ac"; // your api hash
-    private static String PHONENUMBER = "+8618691718911"; // your phone number
-    private static String API_STATE_FILE = PHONENUMBER+".session"; // api state is saved to HDD
-    private static String DEVICE_MODEL = "PC"; // model name
-    private static String OS = "test"; // os name
-    private static String VERSION = "1"; // version
-    private static String LANG_CODE = "en"; // language code
-    private static String NAME = "John"; // name (for signing up)
-    private static String SURNAME = "Doe"; // surname (for signing up)
+    private static int APIKEY = -1; // your api keys
+    private static String APIHASH = ""; // your api hash
+    private static String PHONENUMBER = ""; // your phone number
+    private static String API_STATE_FILE = PHONENUMBER + ".session"; // api state is saved to HDD
+    private static String DEVICE_MODEL = ""; // model name
+    private static String OS = ""; // os name
+    private static String VERSION = ""; // version
+    private static String LANG_CODE = ""; // language code
+    private static String NAME = ""; // name (for signing up)
+    private static String SURNAME = ""; // surname (for signing up)
 
+    // db variables
+    private static String TYPE = "mongodb"; // type of storage (at the moment, only "mongodb")
+    private static String USERNAME = "admin"; // db user
+    private static String PASSWORD = "12354"; // db password
+    private static String DATABASE_NAME = "telegram"; // db name
+    private static String HOST = "127.0.0.1"; // db host
+    private static Integer PORT = 27017; // db port
+    private static String GRIDFS_BUCKET_NAME = "fs"; // gridFS bucket
 
     // other
     private static AbsApiState apiState;
@@ -65,14 +75,37 @@ public class DBMain {
     private static Map<Integer, TLAbsMessage> messagesHashMap = new HashMap<>();
     private static DBStorage dbStorage;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        initConfig();
         initApiDoAuth();
         System.out.println("finish");
+        System.exit(1);
+    }
+
+    private static void initConfig() throws IOException {
+        Properties config = new Properties();
+        FileInputStream inStream = null;
+        try {
+            inStream = new FileInputStream("./application.properties");
+            config.load(inStream);
+        } finally {
+            if (inStream != null) {
+                inStream.close();
+            }
+        }
+        APIKEY = Integer.valueOf(config.getProperty("apiKey"));
+        APIHASH = config.getProperty("apiHash");
+        PHONENUMBER = config.getProperty("phoneNum");
+        API_STATE_FILE = PHONENUMBER + ".session";
+        DEVICE_MODEL = config.getProperty("deviceModel", "PC");
+        OS = config.getProperty("os", "mac");
+        VERSION = config.getProperty("version", "1");
+        LANG_CODE = config.getProperty("langCode", "en");
     }
 
 
     private static void initApiDoAuth() {
-
+//        dbStorage = new MongoDBStorage(USERNAME, DATABASE_NAME, PASSWORD, HOST, PORT, GRIDFS_BUCKET_NAME);
         //register loggers (registration is preferable, otherwise - output will be in console)
         LogMethods.registerLogs("logs", false);
 
@@ -91,21 +124,59 @@ public class DBMain {
 
         // do auth
         AuthMethods.auth(api, apiState, APIKEY, APIHASH, PHONENUMBER, NAME, SURNAME);
+        outputUserDialog();
 
-//        // get all dialogs of user (telegram returns 100 dialogs at maximum, getting by slices)
-        DialogsHistoryMethods.getDialogsChatsUsers(api, dialogs, chatsHashMap, usersHashMap, messagesHashMap);
-//
-        // output user dialogs
-//        for (TLDialog dialog : dialogs) {
-//            System.out.println(ConsoleOutputMethods.getDialogFullNameWithID(dialog.getPeer().getId(), chatsHashMap, usersHashMap));
-//        }
-
-        TLVector<TLAbsUser> users = getChannelUsers(1157009326);
-//        inviteUserToChannel(1405149694, 679560412);
-
-
-        System.out.println("Asdfas");
+        // output channel contact
+        int channelId = 1157009326; //Dipbit_official
+        outputChannelContact(channelId);
+        outputChannelContactDiff(1405149694, 1157009326);
     }
+
+
+    private static void outputChannelContactDiff(int sourceChannelId, int targetChannelId) {
+        TLVector<TLAbsUser> source = getChannelUsers(sourceChannelId);
+        TLVector<TLAbsUser> target = getChannelUsers(targetChannelId);
+        Set<Integer> sourceIds = source.stream().map(m -> m.getId()).collect(Collectors.toSet());
+        Set<Integer> targetIds = target.stream().map(m -> m.getId()).collect(Collectors.toSet());
+        sourceIds.removeAll(targetIds);
+        String fileNameFormat = "./%s_rm_%s.contact";
+        String fileName = String.format(fileNameFormat, sourceChannelId, targetChannelId);
+        source.stream()
+                .filter(f -> sourceIds.contains(f.getId()))
+                .forEach(f -> {
+                    TLUser user = (TLUser) f;
+                    String record = user.getId() + "," + user.getAccessHash() + "," +
+                            user.getUserName() + "," + user.getFirstName() + "," +
+                            user.getLastName() + "," + user.getPhone() + "," + user.getLangCode() + "\n";
+                    FileMethods.appendBytesToFile(fileName, record.getBytes());
+                });
+
+    }
+
+    private static void outputChannelContact(int channelId) {
+        TLVector<TLAbsUser> users = getChannelUsers(channelId);
+        for (TLAbsUser u : users) {
+            TLUser user = (TLUser) u;
+            String record = user.getId() + "," + user.getAccessHash() + "," +
+                    user.getUserName() + "," + user.getFirstName() + "," +
+                    user.getLastName() + "," + user.getPhone() + "," + user.getLangCode() + "\n";
+            String fileNameFormat = "./channel_%s.contact";
+            FileMethods.appendBytesToFile(String.format(fileNameFormat, channelId), record.getBytes());
+        }
+    }
+
+    private static void outputUserDialog() {
+        // get all dialogs of user (telegram returns 100 dialogs at maximum, getting by slices)
+        DialogsHistoryMethods.getDialogsChatsUsers(api, dialogs, chatsHashMap, usersHashMap, messagesHashMap);
+
+        // output user dialogs
+        for (TLDialog dialog : dialogs) {
+            String fileNameFormat = "./%s.dialog";
+            String record = ConsoleOutputMethods.getDialogFullNameWithID(dialog.getPeer().getId(), chatsHashMap, usersHashMap) + "\n";
+            FileMethods.appendBytesToFile(String.format(fileNameFormat, PHONENUMBER), record.getBytes());
+        }
+    }
+
 
     private static void inviteUserToChannel(int channelId, int userId) {
         //        TLChannel channelTo = (TLChannel) chatsHashMap.get(1157009326);//Dipbit_official
