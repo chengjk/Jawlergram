@@ -50,6 +50,9 @@ public class MessageMethods {
 
 
     public static void deleteMessage(TelegramApi api, TLInputChannel channel, Set<Integer> msgIds) {
+        if (msgIds==null||msgIds.isEmpty()) {
+            return;
+        }
         TLRequestChannelsDeleteMessages req = new TLRequestChannelsDeleteMessages();
         req.setChannel(channel);
         TLIntVector idVector = new TLIntVector();

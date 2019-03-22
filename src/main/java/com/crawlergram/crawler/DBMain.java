@@ -17,6 +17,7 @@ import com.crawlergram.crawler.output.ConsoleOutputMethods;
 import com.crawlergram.crawler.output.FileMethods;
 import com.crawlergram.db.DBStorage;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.cli.CommandLine;
 import org.telegram.api.chat.TLAbsChat;
 import org.telegram.api.chat.channel.TLChannel;
 import org.telegram.api.dialog.TLDialog;
@@ -78,37 +79,32 @@ public class DBMain {
     private static int invitePageSize = 10;
 
     public static void main(String[] args) throws IOException {
-        initConfig();
-        initApiDoAuth();
-        clearAddUserMessage(1157009326, 100);
+        CommandLine cmd = CliCmdUtil.validate(args);
+        if (cmd != null) {
+            initConfig();
+            initApiDoAuth();
+            String operate = cmd.getOptionValue("operate");
+            String sourceChannel = cmd.getOptionValue("sourceChannel");
+            String targetChannel = cmd.getOptionValue("targetChannel");
 
-
-//        CommandLine cmd = CliCmdUtil.validate(args);
-//        if (cmd != null) {
-//            initConfig();
-//            initApiDoAuth();
-//            String operate = cmd.getOptionValue("operate");
-//            String sourceChannel = cmd.getOptionValue("sourceChannel");
-//            String targetChannel = cmd.getOptionValue("targetChannel");
-//
-//            String file = cmd.getOptionValue("file");
-//            switch (operate) {
-//                case CliCmdUtil.OPT_DIALOG:
-//                    outputUserDialog();
-//                    break;
-//                case CliCmdUtil.OPT_CONTACT:
-//                    outputChannelContact(Integer.valueOf(sourceChannel));
-//                    break;
-//                case CliCmdUtil.OPT_DIFF:
-//                    outputChannelContactDiff(Integer.valueOf(sourceChannel), Integer.valueOf(targetChannel));
-//                    break;
-//                case CliCmdUtil.OPT_INVITE:
-//                    inviteContactToChannel(Integer.valueOf(targetChannel), file);
-//                    break;
-//            }
-//            System.out.println("finish");
-//        }
-//        System.exit(1);
+            String file = cmd.getOptionValue("file");
+            switch (operate) {
+                case CliCmdUtil.OPT_DIALOG:
+                    outputUserDialog();
+                    break;
+                case CliCmdUtil.OPT_CONTACT:
+                    outputChannelContact(Integer.valueOf(sourceChannel));
+                    break;
+                case CliCmdUtil.OPT_DIFF:
+                    outputChannelContactDiff(Integer.valueOf(sourceChannel), Integer.valueOf(targetChannel));
+                    break;
+                case CliCmdUtil.OPT_INVITE:
+                    inviteContactToChannel(Integer.valueOf(targetChannel), file);
+                    break;
+            }
+            System.out.println("finish");
+        }
+        System.exit(1);
     }
 
     private static void initConfig() throws IOException {
@@ -232,7 +228,8 @@ public class DBMain {
                 List<TLAbsInputUser> slice = users.subList(invited.size(), invited.size() + pageSize);
                 TLVector<TLAbsInputUser> sub = new TLVector<>();
                 sub.addAll(slice);
-//                inviteUserToChannelBatch(channelId, sub);
+                inviteUserToChannelBatch(channelId, sub);
+                clearAddUserMessage(channelId, pageSize);
                 invited.addAll(slice);
                 System.out.println("invited " + invited.size());
             }
