@@ -234,7 +234,7 @@ public class DBMain {
                 System.out.println("invited " + invited.size());
             }
         } catch (IOException e) {
-            log.error("", e);
+            log.error("inviteContactToChannel", e);
         }
     }
 

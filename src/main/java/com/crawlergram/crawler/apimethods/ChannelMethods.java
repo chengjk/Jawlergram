@@ -41,18 +41,16 @@ public class ChannelMethods {
             }
             return users;
         } catch (IOException | TimeoutException e) {
-            log.error("",e);
+            log.error("getUsers ",e);
         }
         return null;
     }
 
 
     public static void inviteUser(TelegramApi api, TLInputChannel channel, TLAbsInputUser user) {
-
         TLVector<TLAbsInputUser> users = new TLVector<>();
         users.add(user);
         inviteUsers(api, channel, users);
-
     }
 
     public static void inviteUsers(TelegramApi api, TLInputChannel channel, TLVector<TLAbsInputUser> users) {
@@ -62,8 +60,12 @@ public class ChannelMethods {
             req.setChannel(channel);
             req.setUsers(users);
             TLAbsUpdates tlAbsUpdates = api.doRpcCall(req);
-        } catch (IOException | TimeoutException e) {
-            e.printStackTrace();
+        } catch (TimeoutException e) {
+            log.error("invite timeout ", e);
+        } catch (IOException e) {
+            log.error("invite io ", e);
+        } catch (Exception e){
+            log.error("err ", e);
         }
     }
 

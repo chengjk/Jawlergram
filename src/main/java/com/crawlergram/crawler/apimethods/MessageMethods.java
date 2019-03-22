@@ -43,7 +43,7 @@ public class MessageMethods {
             //5848
             return addUserMessage;
         } catch (IOException | TimeoutException e) {
-            log.error("", e);
+            log.error("getHistory ", e);
         }
         return null;
     }
@@ -60,11 +60,10 @@ public class MessageMethods {
         req.setId(idVector);
         try {
             TLAffectedMessages affectedMessages = api.doRpcCall(req);
-            System.out.println("ASdf");
         } catch (IOException e) {
-            log.error("", e);
-        } catch (Exception e) {
-            log.error("", e);
+            log.error("timeout ", e);
+        }catch (Exception e){
+            log.error("err", e);
         }
     }
 }
