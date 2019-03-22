@@ -29,7 +29,7 @@ import org.telegram.api.input.chat.TLInputChannel;
 import org.telegram.api.input.user.TLAbsInputUser;
 import org.telegram.api.input.user.TLInputUser;
 import org.telegram.api.message.TLAbsMessage;
-import org.telegram.api.message.TLMessage;
+import org.telegram.api.message.TLMessageService;
 import org.telegram.api.user.TLAbsUser;
 import org.telegram.api.user.TLUser;
 import org.telegram.bot.kernel.engine.MemoryApiState;
@@ -267,7 +267,7 @@ public class DBMain {
         inputChannelTo.setAccessHash(channelTo.getAccessHash());
         Set<TLAbsMessage> history = MessageMethods.getHistory(api, inputChannelTo, limit);
         if (history != null) {
-            Set<Integer> ids = history.stream().map(m -> ((TLMessage) m).getId()).collect(Collectors.toSet());
+            Set<Integer> ids = history.stream().map(m -> ((TLMessageService) m).getId()).collect(Collectors.toSet());
             MessageMethods.deleteMessage(api,inputChannelTo,ids);
         }
 
