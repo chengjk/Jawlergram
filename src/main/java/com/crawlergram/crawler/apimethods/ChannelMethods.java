@@ -30,12 +30,13 @@ public class ChannelMethods {
             TLRequestChannelsGetParticipants req = new TLRequestChannelsGetParticipants();
             req.setChannel(channel);
             req.setOffset(0);
-            req.setLimit(500);
+            req.setLimit(200);
             req.setFilter(new TLChannelParticipantsFilterRecent());
             TLChannelParticipants resp = api.doRpcCall(req);
             TLVector<TLAbsUser> users = resp.getUsers();
             int count = resp.getCount();
             while (users.size()<count){
+                req.setOffset(users.size());
                 TLChannelParticipants respPage = api.doRpcCall(req);
                 users.addAll(respPage.getUsers());
             }
