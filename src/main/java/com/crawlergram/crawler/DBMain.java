@@ -7,6 +7,7 @@
 
 package com.crawlergram.crawler;
 
+import com.alibaba.fastjson.JSON;
 import com.crawlergram.crawler.apicallback.ApiCallbackImplemented;
 import com.crawlergram.crawler.apimethods.AuthMethods;
 import com.crawlergram.crawler.apimethods.ChannelMethods;
@@ -231,7 +232,8 @@ public class DBMain {
                 inviteUserToChannelBatch(channelId, sub);
                 clearAddUserMessage(channelId, pageSize);
                 invited.addAll(slice);
-                System.out.println("invited " + invited.size());
+                log.info("invite user :{}", JSON.toJSONString(slice));
+                log.info("invited {} users.", invited.size());
             }
         } catch (IOException e) {
             log.error("inviteContactToChannel", e);
@@ -266,9 +268,9 @@ public class DBMain {
         inputChannelTo.setChannelId(channelTo.getId());
         inputChannelTo.setAccessHash(channelTo.getAccessHash());
         Set<TLAbsMessage> history = MessageMethods.getHistory(api, inputChannelTo, limit);
-        if (history != null) {
+        if (history != null && !history.isEmpty()) {
             Set<Integer> ids = history.stream().map(m -> ((TLMessageService) m).getId()).collect(Collectors.toSet());
-            MessageMethods.deleteMessage(api,inputChannelTo,ids);
+            MessageMethods.deleteMessage(api, inputChannelTo, ids);
         }
 
     }
