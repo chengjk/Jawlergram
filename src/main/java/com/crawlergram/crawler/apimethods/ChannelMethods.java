@@ -60,6 +60,7 @@ public class ChannelMethods {
             req.setChannel(channel);
             req.setUsers(users);
             TLAbsUpdates tlAbsUpdates = api.doRpcCall(req);
+            log.info("invite {} user succeed.",users.size());
         } catch (TimeoutException e) {
             log.error("invite timeout ", e);
         } catch (IOException e) {

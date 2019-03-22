@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class MessageMethods {
-    public static Set<TLAbsMessage> getHistory(TelegramApi api, TLInputChannel channel,int limit) {
+    public static Set<TLAbsMessage> getHistory(TelegramApi api, TLInputChannel channel, int limit) {
         TLRequestMessagesGetHistory req = new TLRequestMessagesGetHistory();
         req.setLimit(limit);
         req.setMaxId(-1);
@@ -50,7 +50,7 @@ public class MessageMethods {
 
 
     public static void deleteMessage(TelegramApi api, TLInputChannel channel, Set<Integer> msgIds) {
-        if (msgIds==null||msgIds.isEmpty()) {
+        if (msgIds == null || msgIds.isEmpty()) {
             return;
         }
         TLRequestChannelsDeleteMessages req = new TLRequestChannelsDeleteMessages();
@@ -60,9 +60,10 @@ public class MessageMethods {
         req.setId(idVector);
         try {
             TLAffectedMessages affectedMessages = api.doRpcCall(req);
+            log.info("clear {} add user message finish.", msgIds.size());
         } catch (IOException e) {
             log.error("timeout ", e);
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("err", e);
         }
     }
