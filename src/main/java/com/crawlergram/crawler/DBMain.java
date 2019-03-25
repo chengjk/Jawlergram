@@ -80,10 +80,14 @@ public class DBMain {
     private static int invitePageSize = 10;
 
     public static void main(String[] args) throws IOException {
+        log.info("start...");
         CommandLine cmd = CliCmdUtil.validate(args);
         if (cmd != null) {
+            log.info("parse param succeed.");
             initConfig();
+            log.info("parse config succeed.");
             initApiDoAuth();
+            log.info("auth succeed.");
             String operate = cmd.getOptionValue("operate");
             String sourceChannel = cmd.getOptionValue("sourceChannel");
             String targetChannel = cmd.getOptionValue("targetChannel");
@@ -92,18 +96,25 @@ public class DBMain {
             switch (operate) {
                 case CliCmdUtil.OPT_DIALOG:
                     outputUserDialog();
+                    log.info("output user({}) dialog succeed.",PHONENUMBER);
                     break;
                 case CliCmdUtil.OPT_CONTACT:
                     outputChannelContact(Integer.valueOf(sourceChannel));
+                    log.info("output channel {} contact succeed.", sourceChannel);
                     break;
                 case CliCmdUtil.OPT_DIFF:
                     outputChannelContactDiff(Integer.valueOf(sourceChannel), Integer.valueOf(targetChannel));
+                    log.info("output diff succeed. source({})- target({})",sourceChannel,targetChannel);
                     break;
                 case CliCmdUtil.OPT_INVITE:
                     inviteContactToChannel(Integer.valueOf(targetChannel), file);
+                    log.info("invite user succeed.");
                     break;
             }
+            log.info("finish...");
             System.out.println("finish");
+        }else {
+            log.error("invalid params.");
         }
         System.exit(1);
     }
@@ -230,7 +241,7 @@ public class DBMain {
                 TLVector<TLAbsInputUser> sub = new TLVector<>();
                 sub.addAll(slice);
                 inviteUserToChannelBatch(channelId, sub);
-                clearAddUserMessage(channelId, pageSize);
+//                clearAddUserMessage(channelId, pageSize);
                 invited.addAll(slice);
                 log.info("invite user :{}", JSON.toJSONString(slice));
                 log.info("invited {} users.", invited.size());
