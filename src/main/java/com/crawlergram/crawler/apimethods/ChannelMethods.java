@@ -24,7 +24,7 @@ import java.util.concurrent.TimeoutException;
 public class ChannelMethods {
 
 
-    public static TLVector<TLAbsUser> getUsers(TelegramApi api, TLInputChannel channel) {
+    public static TLVector<TLAbsUser> getAllUsers(TelegramApi api, TLInputChannel channel) {
         try {
 
             TLRequestChannelsGetParticipants req = new TLRequestChannelsGetParticipants();
@@ -35,14 +35,30 @@ public class ChannelMethods {
             TLChannelParticipants resp = api.doRpcCall(req);
             TLVector<TLAbsUser> users = resp.getUsers();
             int count = resp.getCount();
-            while (users.size()<count){
+            while (users.size() < count) {
                 req.setOffset(users.size());
                 TLChannelParticipants respPage = api.doRpcCall(req);
                 users.addAll(respPage.getUsers());
             }
             return users;
         } catch (IOException | TimeoutException e) {
-            log.error("getUsers ",e);
+            log.error("getUsers ", e);
+        }
+        return null;
+    }
+
+
+    public static TLChannelParticipants getUsers(TelegramApi api, TLInputChannel channel, int offset, int limit) {
+        try {
+            TLRequestChannelsGetParticipants req = new TLRequestChannelsGetParticipants();
+            req.setChannel(channel);
+            req.setOffset(offset);
+            req.setLimit(limit);
+            req.setFilter(new TLChannelParticipantsFilterRecent());
+            TLChannelParticipants resp = api.doRpcCall(req);
+            return resp;
+        } catch (IOException | TimeoutException e) {
+            log.error("getUsers ", e);
         }
         return null;
     }
@@ -61,12 +77,12 @@ public class ChannelMethods {
             req.setChannel(channel);
             req.setUsers(users);
             TLAbsUpdates tlAbsUpdates = api.doRpcCall(req);
-            log.info("invite {} user succeed.",users.size());
+            log.info("invite {} user succeed.", users.size());
         } catch (TimeoutException e) {
             log.error("invite timeout ", e);
         } catch (IOException e) {
             log.error("invite io ", e);
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("err ", e);
         }
     }

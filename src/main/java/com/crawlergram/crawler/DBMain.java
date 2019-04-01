@@ -19,6 +19,7 @@ import com.crawlergram.crawler.output.FileMethods;
 import com.crawlergram.db.DBStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
+import org.telegram.api.channel.TLChannelParticipants;
 import org.telegram.api.chat.TLAbsChat;
 import org.telegram.api.chat.channel.TLChannel;
 import org.telegram.api.dialog.TLDialog;
@@ -173,8 +174,8 @@ public class DBMain {
 
 
     private static void outputChannelContactDiff(int sourceChannelId, int targetChannelId) {
-        TLVector<TLAbsUser> source = getChannelUsers(sourceChannelId);
-        TLVector<TLAbsUser> target = getChannelUsers(targetChannelId);
+        TLVector<TLAbsUser> source = getChannelAllUsers(sourceChannelId);
+        TLVector<TLAbsUser> target = getChannelAllUsers(targetChannelId);
         Set<Integer> sourceIds = source.stream().map(m -> m.getId()).collect(Collectors.toSet());
         Set<Integer> targetIds = target.stream().map(m -> m.getId()).collect(Collectors.toSet());
         sourceIds.removeAll(targetIds);
@@ -193,14 +194,25 @@ public class DBMain {
     }
 
     private static void outputChannelContact(int channelId) {
-        TLVector<TLAbsUser> users = getChannelUsers(channelId);
-        for (TLAbsUser u : users) {
-            TLUser user = (TLUser) u;
-            String record = user.getId() + "," + user.getAccessHash() + "," +
-                    user.getUserName() + "," + user.getFirstName() + "," +
-                    user.getLastName() + "," + user.getPhone() + "," + user.getLangCode() + "\n";
-            String fileNameFormat = "./contacts/channel_%s.contact";
-            FileMethods.appendBytesToFile(String.format(fileNameFormat, channelId), record.getBytes());
+        int offset = 0;
+        int limit = 200;
+        int count = 1;
+        List<Integer> users = new TLVector<>();
+        while (users.size() < count) {
+            TLChannelParticipants participants = getChannelUsers(channelId, offset, limit);
+            count = participants.getCount();
+            for (TLAbsUser u : participants.getUsers()) {
+                TLUser user = (TLUser) u;
+                String record = user.getId() + "," + user.getAccessHash() + "," +
+                        user.getUserName() + "," + user.getFirstName() + "," +
+                        user.getLastName() + "," + user.getPhone() + "," + user.getLangCode() + "\n";
+                String fileNameFormat = "./contacts/channel_%s.contact";
+                FileMethods.appendBytesToFile(String.format(fileNameFormat, channelId), record.getBytes());
+            }
+            List<Integer> ids = participants.getUsers().stream().map(m -> m.getId()).collect(Collectors.toList());
+            users.addAll(ids);
+            offset = users.size();
+            log.info("output contact process :channel({}) {}/{} ", channelId, users.size(), count);
         }
     }
 
@@ -247,10 +259,11 @@ public class DBMain {
                 TLVector<TLAbsInputUser> sub = new TLVector<>();
                 sub.addAll(slice);
                 inviteUserToChannelBatch(channelId, sub);
-//                clearAddUserMessage(channelId, pageSize);
+
+                clearAddUserMessage(channelId, pageSize);
                 invited.addAll(slice);
-                log.info("invite user :{}", JSON.toJSONString(slice));
-                log.info("invited {} users.", invited.size());
+                log.info("invited user :{}", JSON.toJSONString(slice));
+                log.info("invite process: {}/{} ", invited.size(), users.size());
             }
         } catch (IOException e) {
             log.error("inviteContactToChannel", e);
@@ -292,11 +305,19 @@ public class DBMain {
 
     }
 
-    private static TLVector<TLAbsUser> getChannelUsers(int channelId) {
+    private static TLChannelParticipants getChannelUsers(int channelId, int offset, int limit) {
         TLChannel channelFrom = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelFrom = new TLInputChannel();
         inputChannelFrom.setChannelId(channelFrom.getId());
         inputChannelFrom.setAccessHash(channelFrom.getAccessHash());
-        return ChannelMethods.getUsers(api, inputChannelFrom);
+        return ChannelMethods.getUsers(api, inputChannelFrom, offset, limit);
+    }
+
+    private static TLVector<TLAbsUser> getChannelAllUsers(int channelId) {
+        TLChannel channelFrom = (TLChannel) chatsHashMap.get(channelId);
+        TLInputChannel inputChannelFrom = new TLInputChannel();
+        inputChannelFrom.setChannelId(channelFrom.getId());
+        inputChannelFrom.setAccessHash(channelFrom.getAccessHash());
+        return ChannelMethods.getAllUsers(api, inputChannelFrom);
     }
 }

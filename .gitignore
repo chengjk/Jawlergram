@@ -1,14 +1,14 @@
-*/**/*.log
+*.log
 */**/*.session
 out/
-.idea/
+.idea
 *.iml
 target/
 lib/
 
-sessions/
-dialogs/
-contacts/
+./sessions/
+./dialogs/
+./contacts/
 
 ./application.properties
 */**/*.contact
