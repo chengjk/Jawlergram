@@ -12,6 +12,7 @@ public class CliCmdUtil {
     public static final String sc = "sourceChannel";
     public static final String tc = "targetChannel";
     public static final String f = "file";
+    public static final String p = "phone";
 
 
     public static final String OPT_DIALOG = "dialog";
@@ -32,12 +33,14 @@ public class CliCmdUtil {
         Option sourceChannel = new Option("sc", sc, true, "channel id");
         Option targetChannel = new Option("tc", tc, true, "channel id");
         Option file = new Option("f", f, true, "contact file,output by diff. required for invite.");
+        Option phone = new Option("p", p, true, "phone number");
 
 
         options.addOption(operate);
         options.addOption(sourceChannel);
         options.addOption(targetChannel);
         options.addOption(file);
+        options.addOption(phone);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();

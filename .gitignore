@@ -10,5 +10,6 @@ sessions/
 dialogs/
 contacts/
 
+./application.properties
 */**/*.contact
 */**/*.dialog

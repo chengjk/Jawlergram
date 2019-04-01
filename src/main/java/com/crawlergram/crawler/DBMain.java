@@ -77,7 +77,7 @@ public class DBMain {
     private static TLVector<TLDialog> dialogs = new TLVector<>();
     private static Map<Integer, TLAbsMessage> messagesHashMap = new HashMap<>();
     private static DBStorage dbStorage;
-    private static int invitePageSize = 10;
+    private static int invitePageSize = 5;
     private static int inviteLimitPerAccount = 40;
 
     public static void main(String[] args) throws IOException {
@@ -87,12 +87,15 @@ public class DBMain {
             log.info("parse param succeed.");
             initConfig();
             log.info("parse config succeed.");
-            initApiDoAuth();
             log.info("auth succeed.");
             String operate = cmd.getOptionValue("operate");
             String sourceChannel = cmd.getOptionValue("sourceChannel");
             String targetChannel = cmd.getOptionValue("targetChannel");
-
+            if (cmd.hasOption("phone")) {
+                //覆盖配置文件的
+                PHONENUMBER = cmd.getOptionValue("phone");
+            }
+            initApiDoAuth();
             String file = cmd.getOptionValue("file");
             switch (operate) {
                 case CliCmdUtil.OPT_DIALOG:
@@ -134,7 +137,6 @@ public class DBMain {
         APIKEY = Integer.valueOf(config.getProperty("apiKey"));
         APIHASH = config.getProperty("apiHash");
         PHONENUMBER = config.getProperty("phoneNum");
-        API_STATE_FILE = "./sessions/" + PHONENUMBER + ".session";
         DEVICE_MODEL = config.getProperty("deviceModel", "PC");
         OS = config.getProperty("os", "mac");
         VERSION = config.getProperty("version", "1");
@@ -146,6 +148,7 @@ public class DBMain {
 //        dbStorage = new MongoDBStorage(USERNAME, DATABASE_NAME, PASSWORD, HOST, PORT, GRIDFS_BUCKET_NAME);
         //register loggers (registration is preferable, otherwise - output will be in console)
         LogMethods.registerLogs("logs", false);
+        API_STATE_FILE = "./sessions/" + PHONENUMBER + ".session";
 
         // api state
         apiState = new MemoryApiState(API_STATE_FILE);
