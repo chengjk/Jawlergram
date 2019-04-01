@@ -35,10 +35,11 @@ public class ChannelMethods {
             TLChannelParticipants resp = api.doRpcCall(req);
             TLVector<TLAbsUser> users = resp.getUsers();
             int count = resp.getCount();
-            while (users.size() < count) {
+            while (users.size() < count && users.size() < 10000) { //api 只能拉取前1000个人，测试出来的。
                 req.setOffset(users.size());
                 TLChannelParticipants respPage = api.doRpcCall(req);
                 users.addAll(respPage.getUsers());
+                log.info("get user process: channel({}) {}/{}", channel.getChannelId(), users.size(), count);
             }
             return users;
         } catch (IOException | TimeoutException e) {

@@ -175,7 +175,9 @@ public class DBMain {
 
     private static void outputChannelContactDiff(int sourceChannelId, int targetChannelId) {
         TLVector<TLAbsUser> source = getChannelAllUsers(sourceChannelId);
+        log.info("get source({}) channel users finish size:{}", sourceChannelId, source.size());
         TLVector<TLAbsUser> target = getChannelAllUsers(targetChannelId);
+        log.info("get target({}) channel users finish size:{}", targetChannelId, target.size());
         Set<Integer> sourceIds = source.stream().map(m -> m.getId()).collect(Collectors.toSet());
         Set<Integer> targetIds = target.stream().map(m -> m.getId()).collect(Collectors.toSet());
         sourceIds.removeAll(targetIds);
@@ -198,7 +200,7 @@ public class DBMain {
         int limit = 200;
         int count = 1;
         List<Integer> users = new TLVector<>();
-        while (users.size() < count) {
+        while (users.size() < count && users.size() < 10000) { //api 只能拉取前1000个人，测试出来的
             TLChannelParticipants participants = getChannelUsers(channelId, offset, limit);
             count = participants.getCount();
             for (TLAbsUser u : participants.getUsers()) {
