@@ -50,7 +50,7 @@ public class DBMain {
     private static int APIKEY = -1; // your api keys
     private static String APIHASH = ""; // your api hash
     private static String PHONENUMBER = ""; // your phone number
-    private static String API_STATE_FILE = "./sessions/"+PHONENUMBER + ".session"; // api state is saved to HDD
+    private static String API_STATE_FILE = "./sessions/" + PHONENUMBER + ".session"; // api state is saved to HDD
     private static String DEVICE_MODEL = ""; // model name
     private static String OS = ""; // os name
     private static String VERSION = ""; // version
@@ -78,6 +78,7 @@ public class DBMain {
     private static Map<Integer, TLAbsMessage> messagesHashMap = new HashMap<>();
     private static DBStorage dbStorage;
     private static int invitePageSize = 10;
+    private static int inviteLimitPerAccount = 40;
 
     public static void main(String[] args) throws IOException {
         log.info("start...");
@@ -96,7 +97,7 @@ public class DBMain {
             switch (operate) {
                 case CliCmdUtil.OPT_DIALOG:
                     outputUserDialog();
-                    log.info("output user({}) dialog succeed.",PHONENUMBER);
+                    log.info("output user({}) dialog succeed.", PHONENUMBER);
                     break;
                 case CliCmdUtil.OPT_CONTACT:
                     outputChannelContact(Integer.valueOf(sourceChannel));
@@ -104,7 +105,7 @@ public class DBMain {
                     break;
                 case CliCmdUtil.OPT_DIFF:
                     outputChannelContactDiff(Integer.valueOf(sourceChannel), Integer.valueOf(targetChannel));
-                    log.info("output diff succeed. source({})- target({})",sourceChannel,targetChannel);
+                    log.info("output diff succeed. source({})- target({})", sourceChannel, targetChannel);
                     break;
                 case CliCmdUtil.OPT_INVITE:
                     inviteContactToChannel(Integer.valueOf(targetChannel), file);
@@ -113,7 +114,7 @@ public class DBMain {
             }
             log.info("finish...");
             System.out.println("finish");
-        }else {
+        } else {
             log.error("invalid params.");
         }
         System.exit(1);
@@ -133,7 +134,7 @@ public class DBMain {
         APIKEY = Integer.valueOf(config.getProperty("apiKey"));
         APIHASH = config.getProperty("apiHash");
         PHONENUMBER = config.getProperty("phoneNum");
-        API_STATE_FILE = "./sessions"+PHONENUMBER + ".session";
+        API_STATE_FILE = "./sessions" + PHONENUMBER + ".session";
         DEVICE_MODEL = config.getProperty("deviceModel", "PC");
         OS = config.getProperty("os", "mac");
         VERSION = config.getProperty("version", "1");
@@ -217,8 +218,10 @@ public class DBMain {
             if (file.exists()) {
                 BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
                 String line;
-                while ((line = br.readLine()) != null) {
+                int readLines = 0;
+                while (readLines < inviteLimitPerAccount && (line = br.readLine()) != null) {
                     if (!line.isEmpty()) {
+                        readLines++;
                         String[] split = line.split(",");
                         int userId = Integer.parseInt(split[0]);
                         long userAccessHash = Long.parseLong(split[1]);
