@@ -134,7 +134,7 @@ public class DBMain {
         APIKEY = Integer.valueOf(config.getProperty("apiKey"));
         APIHASH = config.getProperty("apiHash");
         PHONENUMBER = config.getProperty("phoneNum");
-        API_STATE_FILE = "./sessions" + PHONENUMBER + ".session";
+        API_STATE_FILE = "./sessions/" + PHONENUMBER + ".session";
         DEVICE_MODEL = config.getProperty("deviceModel", "PC");
         OS = config.getProperty("os", "mac");
         VERSION = config.getProperty("version", "1");
