@@ -50,7 +50,7 @@ public class DBMain {
     private static int APIKEY = -1; // your api keys
     private static String APIHASH = ""; // your api hash
     private static String PHONENUMBER = ""; // your phone number
-    private static String API_STATE_FILE = PHONENUMBER + ".session"; // api state is saved to HDD
+    private static String API_STATE_FILE = "./sessions/"+PHONENUMBER + ".session"; // api state is saved to HDD
     private static String DEVICE_MODEL = ""; // model name
     private static String OS = ""; // os name
     private static String VERSION = ""; // version
@@ -133,7 +133,7 @@ public class DBMain {
         APIKEY = Integer.valueOf(config.getProperty("apiKey"));
         APIHASH = config.getProperty("apiHash");
         PHONENUMBER = config.getProperty("phoneNum");
-        API_STATE_FILE = PHONENUMBER + ".session";
+        API_STATE_FILE = "./sessions"+PHONENUMBER + ".session";
         DEVICE_MODEL = config.getProperty("deviceModel", "PC");
         OS = config.getProperty("os", "mac");
         VERSION = config.getProperty("version", "1");
@@ -174,7 +174,7 @@ public class DBMain {
         Set<Integer> sourceIds = source.stream().map(m -> m.getId()).collect(Collectors.toSet());
         Set<Integer> targetIds = target.stream().map(m -> m.getId()).collect(Collectors.toSet());
         sourceIds.removeAll(targetIds);
-        String fileNameFormat = "./%s_rm_%s.contact";
+        String fileNameFormat = "./contacts/%s_rm_%s.contact";
         String fileName = String.format(fileNameFormat, sourceChannelId, targetChannelId);
         source.stream()
                 .filter(f -> sourceIds.contains(f.getId()))
@@ -195,7 +195,7 @@ public class DBMain {
             String record = user.getId() + "," + user.getAccessHash() + "," +
                     user.getUserName() + "," + user.getFirstName() + "," +
                     user.getLastName() + "," + user.getPhone() + "," + user.getLangCode() + "\n";
-            String fileNameFormat = "./channel_%s.contact";
+            String fileNameFormat = "./contacts/channel_%s.contact";
             FileMethods.appendBytesToFile(String.format(fileNameFormat, channelId), record.getBytes());
         }
     }
@@ -204,7 +204,7 @@ public class DBMain {
 
         // output user dialogs
         for (TLDialog dialog : dialogs) {
-            String fileNameFormat = "./%s.dialog";
+            String fileNameFormat = "./dialogs/%s.dialog";
             String record = ConsoleOutputMethods.getDialogFullNameWithID(dialog.getPeer().getId(), chatsHashMap, usersHashMap) + "\n";
             FileMethods.appendBytesToFile(String.format(fileNameFormat, PHONENUMBER), record.getBytes());
         }
