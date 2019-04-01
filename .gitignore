@@ -1,10 +1,14 @@
-*.log
-*.session
+*/**/*.log
+*/**/*.session
 out/
 .idea/
 *.iml
 target/
 lib/
 
-*.contact
-*.dialog
+sessions/
+dialogs/
+contacts/
+
+*/**/*.contact
+*/**/*.dialog
