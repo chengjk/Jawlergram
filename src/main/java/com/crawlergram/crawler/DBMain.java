@@ -26,6 +26,7 @@ import org.telegram.api.chat.channel.TLChannel;
 import org.telegram.api.dialog.TLDialog;
 import org.telegram.api.engine.ApiCallback;
 import org.telegram.api.engine.AppInfo;
+import org.telegram.api.engine.RpcException;
 import org.telegram.api.engine.TelegramApi;
 import org.telegram.api.engine.storage.AbsApiState;
 import org.telegram.api.input.chat.TLInputChannel;
@@ -42,6 +43,7 @@ import org.telegram.tl.TLVector;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -83,6 +85,7 @@ public class DBMain {
     private static TLVector<TLDialog> dialogs = new TLVector<>();
     private static Map<Integer, TLAbsMessage> messagesHashMap = new HashMap<>();
     private static DBStorage dbStorage;
+
     private static int invitePageSize = 5;
     private static int inviteLimitPerAccount = 40;
     private static long inviteIntervalMs = 10;
@@ -263,27 +266,40 @@ public class DBMain {
             //one by one
             List<TLAbsInputUser> invited = new ArrayList<>();
             for (TLAbsInputUser user : users) {
+                boolean succeed = false;
+                String errorCode = "";
+                String errorTag = "";
                 TimeUnit.MILLISECONDS.sleep(inviteIntervalMs);
-                inviteUserToChannel(channelId, user);
+                try {
+                    inviteUserToChannel(channelId, user);
+                    succeed = true;
+                } catch (TimeoutException e) {
+                    log.error("invite timeout ", e);
+                } catch (RpcException e) {
+                    errorTag = e.getErrorTag();
+                } catch (IOException e) {
+                    log.error("invite error ", e);
+                } catch (Exception e) {
+                    log.error("unknown error ", e);
+                }
                 invited.add(user);
-                log.info("{} added id({}) username({})", me.getId(), ((TLInputUser) user).getUserId(), userNameMap.get(((TLInputUser) user).getUserId()));
+                log.info("{}! {} {}. {} added id({}) username({}) ",
+                        succeed ? "successful" : "failed",
+                        errorCode, errorTag, me.getId(), ((TLInputUser) user).getUserId(), userNameMap.get(((TLInputUser) user).getUserId()));
                 log.info("invite process: {}/{} ", invited.size(), users.size());
-                if (notifications) {
+                if (succeed && !notifications) {
                     clearAddUserMessage(channelId, 5);
                 }
             }
             //pageable
 //            inviteUserToChannelPageable(channelId, users, invitePageSize);
-        } catch (IOException e) {
-            log.error("inviteContactToChannel", e);
-        } catch (InterruptedException e) {
-            log.error("sleep interval error", e);
         } catch (Exception e) {
             log.error("unknown error", e);
         }
     }
 
-    private static void inviteUserToChannelPageable(int channelId, TLVector<TLAbsInputUser> users, int pageSize) {
+    @Deprecated
+    private static void inviteUserToChannelPageable(int channelId, TLVector<TLAbsInputUser> users, int pageSize) throws IOException, TimeoutException {
         TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelTo = new TLInputChannel();
         inputChannelTo.setChannelId(channelTo.getId());
@@ -299,7 +315,7 @@ public class DBMain {
             ChannelMethods.inviteUsers(api, inputChannelTo, sub);
             invited.addAll(slice);
 
-            if (notifications) {
+            if (!notifications) {
                 clearAddUserMessage(channelId, 5);
             }
             log.info("{} added  {}", me.getId(), JSON.toJSONString(sub));
@@ -307,7 +323,7 @@ public class DBMain {
         }
     }
 
-    private static void inviteUserToChannel(int channelId, TLAbsInputUser user) {
+    private static void inviteUserToChannel(int channelId, TLAbsInputUser user) throws IOException, TimeoutException {
         TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelTo = new TLInputChannel();
         inputChannelTo.setChannelId(channelTo.getId());

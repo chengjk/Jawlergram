@@ -65,27 +65,18 @@ public class ChannelMethods {
     }
 
 
-    public static void inviteUser(TelegramApi api, TLInputChannel channel, TLAbsInputUser user) {
+    public static void inviteUser(TelegramApi api, TLInputChannel channel, TLAbsInputUser user) throws IOException, TimeoutException {
         TLVector<TLAbsInputUser> users = new TLVector<>();
         users.add(user);
         inviteUsers(api, channel, users);
     }
 
-    public static void inviteUsers(TelegramApi api, TLInputChannel channel, TLVector<TLAbsInputUser> users) {
-
-        try {
-            TLRequestChannelsInviteToChannel req = new TLRequestChannelsInviteToChannel();
-            req.setChannel(channel);
-            req.setUsers(users);
-            TLAbsUpdates tlAbsUpdates = api.doRpcCall(req);
-            log.info("invite {} user succeed.", users.size());
-        } catch (TimeoutException e) {
-            log.error("invite timeout ", e);
-        } catch (IOException e) {
-            log.error("invite io ", e);
-        } catch (Exception e) {
-            log.error("unknown err ", e);
-        }
+    public static void inviteUsers(TelegramApi api, TLInputChannel channel, TLVector<TLAbsInputUser> users) throws IOException, TimeoutException {
+        TLRequestChannelsInviteToChannel req = new TLRequestChannelsInviteToChannel();
+        req.setChannel(channel);
+        req.setUsers(users);
+        TLAbsUpdates tlAbsUpdates = api.doRpcCall(req);
+        log.info("invite {} user succeed.", users.size());
     }
 
 

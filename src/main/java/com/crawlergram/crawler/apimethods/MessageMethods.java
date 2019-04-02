@@ -60,7 +60,7 @@ public class MessageMethods {
         req.setId(idVector);
         try {
             TLAffectedMessages affectedMessages = api.doRpcCall(req);
-            log.info("clear {} add user message finish.", msgIds.size());
+            log.info("clear {} notification message finish.", msgIds.size());
         } catch (IOException e) {
             log.error("timeout ", e);
         } catch (Exception e) {
