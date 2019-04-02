@@ -36,7 +36,6 @@ import org.telegram.api.message.TLAbsMessage;
 import org.telegram.api.message.TLMessageService;
 import org.telegram.api.user.TLAbsUser;
 import org.telegram.api.user.TLUser;
-import org.telegram.api.user.TLUserFull;
 import org.telegram.bot.kernel.engine.MemoryApiState;
 import org.telegram.tl.TLVector;
 
@@ -89,14 +88,18 @@ public class DBMain {
     private static int invitePageSize = 5;
     private static int inviteLimitPerAccount = 20;
     private static long inviteIntervalMs = 10;
-    public static TLUser me;
+    private static TLUser me;
+    private static Map<Integer, String> blackListMap = new HashMap<>();
+    private static String blackListFilePath = "./contacts/black/blacklist.contact";
+
 
     public static void main(String[] args) throws IOException {
         log.info("start...");
         CommandLine cmd = CliCmdUtil.validate(args);
         if (cmd != null) {
             log.info("parse param succeed.");
-            initConfig();
+            loadConfig();
+            loadBlacklist();
             log.info("parse config succeed.");
             log.info("auth succeed.");
             String operate = cmd.getOptionValue("operate");
@@ -134,7 +137,7 @@ public class DBMain {
         System.exit(1);
     }
 
-    private static void initConfig() throws IOException {
+    private static void loadConfig() throws IOException {
         Properties config = new Properties();
         FileInputStream inStream = null;
         try {
@@ -155,6 +158,23 @@ public class DBMain {
         notifications = Boolean.valueOf(config.getProperty("notifications", "false"));
         inviteIntervalMs = Long.valueOf(config.getProperty("invite.interval.ms", "10"));
         inviteLimitPerAccount = Integer.valueOf(config.getProperty("invite.limit.account", "20"));
+    }
+
+    private static void loadBlacklist() throws IOException {
+        File file = new File(blackListFilePath);
+        if (file.exists()) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(blackListFilePath)));
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (!line.isEmpty()) {
+                    String[] split = line.split(",");
+                    blackListMap.put(Integer.valueOf(split[0]), split[1]);
+                }
+            }
+            log.info("load black list finish. size:{}", blackListMap.size());
+            br.close();
+        }
+
     }
 
 
@@ -193,7 +213,10 @@ public class DBMain {
         log.info("get target({}) channel users finish size:{}", targetChannelId, target.size());
         Set<Integer> sourceIds = source.stream().map(m -> m.getId()).collect(Collectors.toSet());
         Set<Integer> targetIds = target.stream().map(m -> m.getId()).collect(Collectors.toSet());
+        //remove target
         sourceIds.removeAll(targetIds);
+        //remove blacklist
+        sourceIds.removeAll(blackListMap.keySet());
         String fileNameFormat = "./contacts/%s_channel_%s_rm_%s.contact";
         String fileName = String.format(fileNameFormat, PHONENUMBER, sourceChannelId, targetChannelId);
         source.stream()
@@ -294,6 +317,8 @@ public class DBMain {
                 if (errorTag.toUpperCase().contains("FLOOD")) {
                     log.error("account({}) FLOOD. {}", me.getId(), errorTag);
                     break;
+                } else {
+                    outputContactBlacklist(((TLInputUser) user).getUserId(), errorTag);
                 }
             }
             //pageable
@@ -302,6 +327,12 @@ public class DBMain {
             log.error("unknown error", e);
         }
     }
+
+    private static void outputContactBlacklist(Integer userId, String error) {
+        String record = userId + "," + error + "\n";
+        FileMethods.appendBytesToFile(blackListFilePath, record.getBytes());
+    }
+
 
     @Deprecated
     private static void inviteUserToChannelPageable(int channelId, TLVector<TLAbsInputUser> users, int pageSize) throws IOException, TimeoutException {
