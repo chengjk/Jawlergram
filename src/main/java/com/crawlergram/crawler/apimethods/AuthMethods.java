@@ -7,6 +7,8 @@
 
 package com.crawlergram.crawler.apimethods;
 
+import com.crawlergram.crawler.DBMain;
+import lombok.extern.slf4j.Slf4j;
 import org.telegram.api.TLConfig;
 import org.telegram.api.TLNearestDc;
 import org.telegram.api.auth.TLAuthorization;
@@ -19,10 +21,13 @@ import org.telegram.api.functions.auth.TLRequestAuthSignIn;
 import org.telegram.api.functions.auth.TLRequestAuthSignUp;
 import org.telegram.api.functions.help.TLRequestHelpGetConfig;
 import org.telegram.api.functions.help.TLRequestHelpGetNearestDc;
+import org.telegram.api.user.TLAbsUser;
+import org.telegram.api.user.TLUser;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
+@Slf4j
 public class AuthMethods {
 
     /**
@@ -55,8 +60,8 @@ public class AuthMethods {
      * @see TelegramApi
      * @see AbsApiState
      */
-    public static void auth(TelegramApi api, AbsApiState apiState, int key,
-                            String hash, String phoneNum, String name, String surname){
+    public static TLAbsUser auth(TelegramApi api, AbsApiState apiState, int key,
+                                 String hash, String phoneNum, String name, String surname){
         try {
             TLAuthorization auth;
             // check if is not authenticated (for primary DC)
@@ -74,19 +79,26 @@ public class AuthMethods {
                 } else {
 //                    auth = singUp(api, phoneNum, sentCode.getPhoneCodeHash(), name, surname);
                     System.err.println("NOT REGISTERED!");
-                    return;
+                    return null;
                 }
                 // refresh api state
                 apiState.doAuth(auth);
                 apiState.setAuthenticated(apiState.getPrimaryDc(), true);
+                return auth.getUser();
             }
             // output auth info
             System.out.println("AUTHENTICATED: " + apiState.getUserId());
+            TLUser me = new TLUser();
+            me.setId(apiState.getUserId());
+            return me;
         } catch (RpcException e) {
             System.err.println(e.getErrorTag() + " " + e.getErrorCode());
         } catch (TimeoutException e) {
             System.err.println(e.getMessage());
+        }catch (Exception e){
+            log.error("unknown error.", e);
         }
+        return null;
     }
 
     /**

@@ -84,7 +84,7 @@ public class ChannelMethods {
         } catch (IOException e) {
             log.error("invite io ", e);
         } catch (Exception e) {
-            log.error("err ", e);
+            log.error("unknown err ", e);
         }
     }
 
