@@ -87,7 +87,7 @@ public class DBMain {
     private static DBStorage dbStorage;
 
     private static int invitePageSize = 5;
-    private static int inviteLimitPerAccount = 40;
+    private static int inviteLimitPerAccount = 20;
     private static long inviteIntervalMs = 10;
     public static TLUser me;
 
@@ -154,6 +154,7 @@ public class DBMain {
         LANG_CODE = config.getProperty("langCode", "en");
         notifications = Boolean.valueOf(config.getProperty("notifications", "false"));
         inviteIntervalMs = Long.valueOf(config.getProperty("invite.interval.ms", "10"));
+        inviteLimitPerAccount = Integer.valueOf(config.getProperty("invite.limit.account", "20"));
     }
 
 
@@ -193,8 +194,8 @@ public class DBMain {
         Set<Integer> sourceIds = source.stream().map(m -> m.getId()).collect(Collectors.toSet());
         Set<Integer> targetIds = target.stream().map(m -> m.getId()).collect(Collectors.toSet());
         sourceIds.removeAll(targetIds);
-        String fileNameFormat = "./contacts/%s_rm_%s.contact";
-        String fileName = String.format(fileNameFormat, sourceChannelId, targetChannelId);
+        String fileNameFormat = "./contacts/%s_channel_%s_rm_%s.contact";
+        String fileName = String.format(fileNameFormat, PHONENUMBER, sourceChannelId, targetChannelId);
         source.stream()
                 .filter(f -> sourceIds.contains(f.getId()))
                 .forEach(f -> {
@@ -217,8 +218,8 @@ public class DBMain {
             for (TLAbsUser u : participants.getUsers()) {
                 TLUser user = (TLUser) u;
                 String record = getUserString(user);
-                String fileNameFormat = "./contacts/channel_%s.contact";
-                FileMethods.appendBytesToFile(String.format(fileNameFormat, channelId), record.getBytes());
+                String fileNameFormat = "./contacts/%s_channel_%s.contact";
+                FileMethods.appendBytesToFile(String.format(fileNameFormat, PHONENUMBER, channelId), record.getBytes());
             }
             List<Integer> ids = participants.getUsers().stream().map(m -> m.getId()).collect(Collectors.toList());
             users.addAll(ids);
@@ -289,6 +290,10 @@ public class DBMain {
                 log.info("invite process: {}/{} ", invited.size(), users.size());
                 if (succeed && !notifications) {
                     clearAddUserMessage(channelId, 5);
+                }
+                if (errorTag.toUpperCase().contains("FLOOD")) {
+                    log.error("account({}) FLOOD. {}", me.getId(), errorTag);
+                    break;
                 }
             }
             //pageable
