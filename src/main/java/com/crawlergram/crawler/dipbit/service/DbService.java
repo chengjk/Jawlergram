@@ -20,6 +20,7 @@ import org.telegram.api.engine.TelegramApi;
 import org.telegram.api.input.chat.TLInputChannel;
 import org.telegram.api.input.user.TLAbsInputUser;
 import org.telegram.api.message.TLAbsMessage;
+import org.telegram.api.message.TLMessage;
 import org.telegram.api.message.TLMessageService;
 import org.telegram.api.user.TLAbsUser;
 import org.telegram.api.user.TLUser;
@@ -145,7 +146,7 @@ public class DbService {
     }
 
     @Deprecated
-    private  void inviteUserToChannelPageable(int channelId, TLVector<TLAbsInputUser> users, int pageSize) throws IOException, TimeoutException {
+    private void inviteUserToChannelPageable(int channelId, TLVector<TLAbsInputUser> users, int pageSize) throws IOException, TimeoutException {
         TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelTo = new TLInputChannel();
         inputChannelTo.setChannelId(channelTo.getId());
@@ -261,10 +262,28 @@ public class DbService {
         inputChannelTo.setChannelId(channelTo.getId());
         inputChannelTo.setAccessHash(channelTo.getAccessHash());
         Set<TLAbsMessage> history = MessageMethods.getHistory(api, inputChannelTo, limit);
+
         if (history != null && !history.isEmpty()) {
-            Set<Integer> ids = history.stream().map(m -> ((TLMessageService) m).getId()).collect(Collectors.toSet());
+            Set<Integer> ids = history.stream().map(m -> {
+                if (m instanceof TLMessage) {
+                    return ((TLMessage) m).getId();
+                } else if (m instanceof TLMessageService) {
+                    return ((TLMessageService) m).getId();
+                }
+                return null;
+            }).collect(Collectors.toSet());
+            ids.remove(null);
+//            Integer max = ids.stream().max(Integer::compareTo).get();
+//            ids.clear();
+//            ids.add(max);
+
             MessageMethods.deleteMessage(api, inputChannelTo, ids);
         }
+
+//        if (history != null && !history.isEmpty()) {
+//            Set<Integer> ids = history.stream().map(m -> ((TLMessageService) m).getId()).collect(Collectors.toSet());
+//            MessageMethods.deleteMessage(api, inputChannelTo, ids);
+//        }
     }
 
     @NotNull

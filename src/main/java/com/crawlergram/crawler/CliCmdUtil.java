@@ -19,6 +19,7 @@ public class CliCmdUtil {
     public static final String OPT_CONTACT = "contact";
     public static final String OPT_DIFF = "diff";
     public static final String OPT_INVITE = "invite";
+    public static final String OPT_CLEAR = "clear";
 
 
     public static CommandLine validate(String[] args) {
@@ -48,8 +49,8 @@ public class CliCmdUtil {
         try {
             cmd = parser.parse(options, args);
 
+            checkParam(cmd, p);
             String type = cmd.getOptionValue("operate");
-
             switch (type) {
                 case OPT_DIALOG:
                     break;
@@ -63,6 +64,9 @@ public class CliCmdUtil {
                 case OPT_INVITE:
                     checkParam(cmd, tc);
                     checkParam(cmd, f);
+                    break;
+                case OPT_CLEAR:
+                    checkParam(cmd, tc);
                     break;
                 default:
                     throw new ParseException("unknown operate.");

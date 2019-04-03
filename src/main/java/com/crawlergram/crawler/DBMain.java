@@ -109,8 +109,12 @@ public class DBMain {
                     break;
                 case CliCmdUtil.OPT_INVITE:
                     service.inviteContactToChannel(Integer.valueOf(targetChannel), file);
-                    log.info("invite user succeed.");
+                    log.info("invite user finish.");
                     break;
+                case CliCmdUtil.OPT_CLEAR:
+                    service.clearAddUserMessage(Integer.valueOf(targetChannel), 500);
+                    break;
+
             }
             log.info("finish...");
             System.out.println("finish");
