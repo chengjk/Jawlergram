@@ -13,6 +13,7 @@ import com.crawlergram.crawler.apimethods.AuthMethods;
 import com.crawlergram.crawler.apimethods.ChannelMethods;
 import com.crawlergram.crawler.apimethods.DialogsHistoryMethods;
 import com.crawlergram.crawler.apimethods.MessageMethods;
+import com.crawlergram.crawler.dipbit.model.User;
 import com.crawlergram.crawler.logs.LogMethods;
 import com.crawlergram.crawler.output.ConsoleOutputMethods;
 import com.crawlergram.crawler.output.FileMethods;
@@ -89,6 +90,7 @@ public class DBMain {
     private static int inviteLimitPerAccount = 20;
     private static long inviteIntervalMs = 10;
     private static TLUser me;
+    private static boolean inviteSelfContact = false;
     private static Map<Integer, String> blackListMap = new HashMap<>();
     private static String blackListFilePath = "./contacts/black/blacklist.contact";
 
@@ -158,6 +160,7 @@ public class DBMain {
         notifications = Boolean.valueOf(config.getProperty("notifications", "false"));
         inviteIntervalMs = Long.valueOf(config.getProperty("invite.interval.ms", "10"));
         inviteLimitPerAccount = Integer.valueOf(config.getProperty("invite.limit.account", "20"));
+        inviteSelfContact = Boolean.valueOf(config.getProperty("invite.self.contact", "false"));
     }
 
     private static void loadBlacklist() throws IOException {
@@ -264,8 +267,7 @@ public class DBMain {
     public static void inviteContactToChannel(int channelId, String filePath) {
         try {
             File file = new File(filePath);
-            TLVector<TLAbsInputUser> users = new TLVector<>();
-            Map<Integer, String> userNameMap = new HashMap<>();
+            TLVector<User> users = new TLVector<>();
             if (file.exists()) {
                 BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
                 String line;
@@ -277,25 +279,29 @@ public class DBMain {
                         int userId = Integer.parseInt(split[0]);
                         long userAccessHash = Long.parseLong(split[1]);
                         String userName = split[2];
-                        userNameMap.put(userId, userName);
-                        TLInputUser inputUser = new TLInputUser();
-                        inputUser.setUserId(userId);
-                        inputUser.setAccessHash(userAccessHash);
-                        users.add(inputUser);
+                        User user = new User();
+                        user.setAccessHash(userAccessHash);
+                        user.setId(userId);
+                        user.setUsername(userName);
+                        users.add(user);
                     }
                 }
                 br.close();
             }
 
             //one by one
-            List<TLAbsInputUser> invited = new ArrayList<>();
-            for (TLAbsInputUser user : users) {
+            List<User> invited = new ArrayList<>();
+            for (User user : users) {
                 boolean succeed = false;
                 String errorCode = "";
                 String errorTag = "";
                 TimeUnit.MILLISECONDS.sleep(inviteIntervalMs);
                 try {
-                    inviteUserToChannel(channelId, user);
+                    if (inviteSelfContact) {
+                        inviteUserToChannel(channelId, user.toTlInputUser());
+                    } else {
+                        inviteUserToChannel(channelId, user.resolveUsername(api).toTlInputUser());
+                    }
                     succeed = true;
                 } catch (TimeoutException e) {
                     log.error("invite timeout ", e);
@@ -309,7 +315,7 @@ public class DBMain {
                 invited.add(user);
                 log.info("{}! {} {}. {} added id({}) username({}) ",
                         succeed ? "successful" : "failed",
-                        errorCode, errorTag, me.getId(), ((TLInputUser) user).getUserId(), userNameMap.get(((TLInputUser) user).getUserId()));
+                        errorCode, errorTag, me.getId(), user.getId(), user.getUsername());
                 log.info("invite process: {}/{} ", invited.size(), users.size());
                 if (succeed && !notifications) {
                     clearAddUserMessage(channelId, 5);
@@ -318,7 +324,7 @@ public class DBMain {
                     log.error("account({}) FLOOD. {}", me.getId(), errorTag);
                     break;
                 } else {
-                    outputContactBlacklist(((TLInputUser) user).getUserId(), errorTag);
+                    outputContactBlacklist(user.getId(), errorTag);
                 }
             }
             //pageable
@@ -362,6 +368,7 @@ public class DBMain {
     private static void inviteUserToChannel(int channelId, TLAbsInputUser user) throws IOException, TimeoutException {
         TLChannel channelTo = (TLChannel) chatsHashMap.get(channelId);
         TLInputChannel inputChannelTo = new TLInputChannel();
+
         inputChannelTo.setChannelId(channelTo.getId());
         inputChannelTo.setAccessHash(channelTo.getAccessHash());
 
