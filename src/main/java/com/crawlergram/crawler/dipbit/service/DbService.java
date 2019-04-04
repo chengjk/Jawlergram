@@ -279,11 +279,10 @@ public class DbService {
 
             MessageMethods.deleteMessage(api, inputChannelTo, ids);
         }
+    }
 
-//        if (history != null && !history.isEmpty()) {
-//            Set<Integer> ids = history.stream().map(m -> ((TLMessageService) m).getId()).collect(Collectors.toSet());
-//            MessageMethods.deleteMessage(api, inputChannelTo, ids);
-//        }
+    public void joinChannel(String link) {
+        MessageMethods.joinToChat(api, link);
     }
 
     @NotNull

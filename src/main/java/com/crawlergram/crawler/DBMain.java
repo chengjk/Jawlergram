@@ -46,16 +46,6 @@ public class DBMain {
     private static String SURNAME = ""; // surname (for signing up)
     private static boolean notifications = false;
 
-
-    // db variables
-    private static String TYPE = "mongodb"; // type of storage (at the moment, only "mongodb")
-    private static String USERNAME = "admin"; // db user
-    private static String PASSWORD = "12354"; // db password
-    private static String DATABASE_NAME = "telegram"; // db name
-    private static String HOST = "127.0.0.1"; // db host
-    private static Integer PORT = 27017; // db port
-    private static String GRIDFS_BUCKET_NAME = "fs"; // gridFS bucket
-
     // other
     private static AbsApiState apiState;
     private static AppInfo appInfo;
@@ -65,7 +55,6 @@ public class DBMain {
     private static Map<Integer, TLAbsUser> usersHashMap = new HashMap<>();
     private static TLVector<TLDialog> dialogs = new TLVector<>();
     private static Map<Integer, TLAbsMessage> messagesHashMap = new HashMap<>();
-    private static DBStorage dbStorage;
 
     private static int invitePageSize = 5;
     private static int inviteLimitPerAccount = 20;
