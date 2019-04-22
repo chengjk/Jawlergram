@@ -44,6 +44,7 @@ public class MessageMethods {
             Set<TLAbsMessage> addUserMessage = messages.getMessages().stream()
                     .filter(f -> f instanceof TLMessageService)
                     .filter(f -> ((TLMessageService) f).getAction() instanceof TLMessageActionChatAddUser)
+                    .filter(f -> ((TLMessageActionChatAddUser) ((TLMessageService) f).getAction()).getUsers().size() > 1)
 //                    .filter(f -> ((TLMessageService) f).getFromId() == 478702429)
                     .collect(Collectors.toSet());
             //5848
@@ -76,7 +77,6 @@ public class MessageMethods {
 
 
     /**
-     *
      * @param api
      * @param link http://telegram.me/xxxxx,https://telegram.me/joinchat/xxxxx
      */

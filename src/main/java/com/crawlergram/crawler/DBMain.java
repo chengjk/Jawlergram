@@ -101,7 +101,8 @@ public class DBMain {
                     log.info("invite user finish.");
                     break;
                 case CliCmdUtil.OPT_CLEAR:
-                    service.clearAddUserMessage(Integer.valueOf(targetChannel), 500);
+                    service.clearAddUserMessage(Integer.valueOf(targetChannel), 1);
+                    log.info("clear add user notification finish");
                     break;
 
             }
