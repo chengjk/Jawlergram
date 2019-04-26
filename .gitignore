@@ -1,5 +1,6 @@
 *.log
 */**/*.session
+*/**/*.properties
 out/
 .idea
 *.iml
