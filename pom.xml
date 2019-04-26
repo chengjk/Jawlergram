@@ -8,6 +8,8 @@
     <groupId>com.crawlegram</groupId>
     <artifactId>Jawlergram</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <description>telegram invite user tool</description>
+    <packaging>jar</packaging>
     <dependencies>
         <dependency>
             <groupId>org.mongodb</groupId>
@@ -54,80 +56,82 @@
     </dependencies>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <!--<executions>-->
-                        <!--<execution>-->
-                            <!--<phase>package</phase>-->
-                            <!--<goals>-->
-                                <!--<goal>single</goal>-->
-                            <!--</goals>-->
-                        <!--</execution>-->
-                    <!--</executions>-->
+        <!--excludes res  from classes and jar-->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>*.properties</exclude>
+                </excludes>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <!--output to customer dir-->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.0.2</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <finalName>tit</finalName>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>libs/</classpathPrefix>
+                            <mainClass>com.crawlergram.crawler.DBMain</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
 
-                    <configuration>
-                        <finalName>telTool</finalName>
-                        <descriptors>
-                            <descriptor>assembly.xml</descriptor>
-                        </descriptors>
-                        <archive>
-                            <manifest>
-                                <mainClass>com.crawlergram.crawler.DBMain</mainClass>
-
-                            </manifest>
-                        </archive>
-                        <descriptorRefs>
-                            <descriptorRef>jar-with-dependencies</descriptorRef>
-                        </descriptorRefs>
-
-                    </configuration>
-
-                </plugin>
-
-
-
-                <!--<plugin>-->
-                    <!--<groupId>org.apache.maven.plugins</groupId>-->
-                    <!--<artifactId>maven-jar-plugin</artifactId>-->
-
-                    <!--<configuration>-->
-                        <!--<archive>-->
-                            <!--<manifest>-->
-                                <!--<mainClass>com.crawlergram.crawler.DBMain</mainClass>-->
-                                <!--<addClasspath>true</addClasspath>-->
-                                <!--<classpathPrefix>lib/</classpathPrefix>-->
-                            <!--</manifest>-->
-                        <!--</archive>-->
-                        <!--<includes>-->
-                            <!--<include>src/main/resources/application.properties</include>-->
-                        <!--</includes>-->
-                    <!--</configuration>-->
-                <!--</plugin>-->
-                <!--<plugin>-->
-                    <!--<groupId>org.apache.maven.plugins</groupId>-->
-                    <!--<artifactId>maven-dependency-plugin</artifactId>-->
-                    <!--<version>2.8</version>-->
-                    <!--<executions>-->
-                        <!--<execution>-->
-                            <!--<phase>package</phase>-->
-                            <!--<goals>-->
-                                <!--<goal>copy</goal>-->
-                            <!--</goals>-->
-                        <!--</execution>-->
-                    <!--</executions>-->
-                <!--</plugin>-->
-            </plugins>
-        </pluginManagement>
+            <!--copy dependency to libs-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>
+                                ${project.build.directory}/libs
+                            </outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
 </project>
